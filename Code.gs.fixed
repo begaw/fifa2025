@@ -1,0 +1,173 @@
+// =============================================
+// FIFA 2025 2v2 CHALLENGE - BACKEND API (FIXED)
+// Copy-paste ini ke Apps Script Editor, lalu Deploy -> New version
+// =============================================
+
+const SHEET_REGISTRASI = 'Registrasi';
+
+// =============================================
+// Helper: ambil teamName dari berbagai key (handle frontend multi-key)
+// =============================================
+function getTeamName_(data) {
+  const raw = data.teamName || data.team_name || data['Team Name'] || data.team || '';
+  return raw.toString().trim();
+}
+
+// =============================================
+// DO POST - Handle registrasi & approve/reject
+// =============================================
+function doPost(e) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_REGISTRASI);
+    if (!sheet) return respond(false, 'Sheet ' + SHEET_REGISTRASI + ' tidak ditemukan. Jalankan testConnection() dulu');
+    const data = JSON.parse(e.postData.contents);
+    
+    if (data.action === 'approve') {
+      const teamName = getTeamName_(data);
+      return approveRegistration(teamName, data.approvedBy, data.schedule);
+    } else if (data.action === 'reject') {
+      const teamName = getTeamName_(data);
+      return rejectRegistration(teamName);
+    } else {
+      return saveRegistration(data);
+    }
+  } catch (error) {
+    return respond(false, error.toString());
+  }
+}
+
+// =============================================
+// DO GET - Ambil data untuk dashboard
+// =============================================
+function doGet(e) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_REGISTRASI);
+    if (!sheet) return respond(false, 'Sheet Registrasi tidak ditemukan');
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 1) return respond(true, 'Data kosong', []);
+    const headers = data[0].map(h => h.toString().trim());
+    const rows = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = {};
+      for (let j = 0; j < headers.length; j++) {
+        row[headers[j]] = data[i][j] || '';
+      }
+      rows.push(row);
+    }
+    return respond(true, 'Data berhasil diambil', rows);
+  } catch (error) {
+    return respond(false, error.toString());
+  }
+}
+
+// =============================================
+// SAVE REGISTRATION
+// =============================================
+function saveRegistration(data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_REGISTRASI);
+  const required = ['team_name', 'player1', 'player2', 'tim_digunakan', 'platform', 'tanggal', 'jam'];
+  for (let field of required) {
+    if (!data[field] || data[field].toString().trim() === '') {
+      throw new Error(`Field ${field} wajib diisi`);
+    }
+  }
+  // Cek duplikat - case-insensitive + trim
+  const teamToCheck = data.team_name.toString().trim().toLowerCase();
+  const existing = sheet.getDataRange().getValues();
+  for (let i = 1; i < existing.length; i++) {
+    const existingTeam = existing[i][1] ? existing[i][1].toString().trim().toLowerCase() : '';
+    const status = existing[i][8] ? existing[i][8].toString().trim() : '';
+    if (existingTeam === teamToCheck && status === 'Pending') {
+      throw new Error('Tim dengan nama ini sudah terdaftar dan masih pending');
+    }
+  }
+  const row = [
+    new Date().toISOString(),
+    data.team_name.toString().trim(),
+    data.player1.toString().trim(),
+    data.player2.toString().trim(),
+    data.tim_digunakan.toString().trim(),
+    data.platform.toString().trim(),
+    data.tanggal,
+    data.jam,
+    'Pending',
+    '', '', '', data.notes ? data.notes.toString().trim() : ''
+  ];
+  sheet.appendRow(row);
+  return respond(true, 'Pendaftaran berhasil!');
+}
+
+// =============================================
+// APPROVE REGISTRATION (FIXED: trim + case-insensitive)
+// =============================================
+function approveRegistration(teamName, approvedBy, schedule) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_REGISTRASI);
+  const data = sheet.getDataRange().getValues();
+  const cleanTarget = teamName ? teamName.toString().trim().toLowerCase() : '';
+  if (!cleanTarget) return respond(false, '❌ teamName kosong');
+
+  for (let i = 1; i < data.length; i++) {
+    const sheetTeam = data[i][1] ? data[i][1].toString().trim().toLowerCase() : '';
+    const status = data[i][8] ? data[i][8].toString().trim() : '';
+    // FIX: bandingkan dengan trim+lowercase, bukan === strict
+    if (sheetTeam === cleanTarget) {
+      if (status !== 'Pending') {
+        return respond(false, '❌ Tim "' + data[i][1] + '" sudah diproses (Status: ' + status + ')');
+      }
+      sheet.getRange(i + 1, 9).setValue('Approved');
+      sheet.getRange(i + 1, 10).setValue(approvedBy ? approvedBy.toString().trim() : '');
+      sheet.getRange(i + 1, 11).setValue(new Date().toISOString());
+      sheet.getRange(i + 1, 12).setValue(schedule ? schedule.toString().trim() : '');
+      return respond(true, '✅ Tim berhasil di-approve!');
+    }
+  }
+  return respond(false, '❌ Tim tidak ditemukan: "' + teamName + '"');
+}
+
+// =============================================
+// REJECT REGISTRATION (FIXED)
+// =============================================
+function rejectRegistration(teamName) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_REGISTRASI);
+  const data = sheet.getDataRange().getValues();
+  const cleanTarget = teamName ? teamName.toString().trim().toLowerCase() : '';
+  if (!cleanTarget) return respond(false, '❌ teamName kosong');
+
+  for (let i = 1; i < data.length; i++) {
+    const sheetTeam = data[i][1] ? data[i][1].toString().trim().toLowerCase() : '';
+    const status = data[i][8] ? data[i][8].toString().trim() : '';
+    if (sheetTeam === cleanTarget) {
+      if (status !== 'Pending') {
+        return respond(false, '❌ Tim "' + data[i][1] + '" sudah diproses (Status: ' + status + ')');
+      }
+      sheet.getRange(i + 1, 9).setValue('Rejected');
+      return respond(true, '✅ Tim berhasil di-reject');
+    }
+  }
+  return respond(false, '❌ Tim tidak ditemukan: "' + teamName + '"');
+}
+
+// =============================================
+// HELPER RESPONSE
+// =============================================
+function respond(success, message, data = null) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ success: success, message: message, data: data, error: success ? undefined : message }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// =============================================
+// TEST FUNCTION
+// =============================================
+function testConnection() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_REGISTRASI);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_REGISTRASI);
+    const headers = ['Timestamp', 'Team Name', 'Player 1', 'Player 2', 'Tim Yang Digunakan', 'Platform', 'Preferred Date', 'Preferred Time', 'Status', 'Approved By', 'Approval Date', 'Match Schedule', 'Notes'];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    Logger.log('✅ Sheet Registrasi berhasil dibuat!');
+  } else {
+    Logger.log(`✅ Sheet ditemukan, total data: ${sheet.getLastRow() - 1} baris`);
+  }
+}

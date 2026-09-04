@@ -600,7 +600,8 @@
                     closeModal();
                     refreshData();
                 } else {
-                    alert('❌ Gagal approve: ' + (result.error || text || 'Unknown error') + '\n\nTeam: "' + selectedRow + '"\nCek Google Sheet -> kolom "Team Name" harus persis, tanpa spasi lebih. Cek Apps Script Execution log.');
+                    const msg = result.error || result.message || text || 'Unknown error';
+                    alert('❌ Gagal approve: ' + msg + '\n\nTeam: "' + selectedRow + '"\nCek Google Sheet -> kolom "Team Name" harus persis, tanpa spasi lebih. Cek Apps Script Execution log.');
                 }
             } catch (error) {
                 console.error('Approve error:', error);
@@ -632,7 +633,8 @@
                     alert('✅ Tim berhasil di-reject');
                     refreshData();
                 } else {
-                    alert('❌ Gagal reject: ' + (result.error || text || 'Unknown error') + '\n\nTeam: "' + teamName + '"');
+                    const msg = result.error || result.message || text || 'Unknown error';
+                    alert('❌ Gagal reject: ' + msg + '\n\nTeam: "' + teamName + '"');
                 }
             } catch (error) {
                 console.error('Reject error:', error);
