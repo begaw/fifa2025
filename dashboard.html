@@ -574,18 +574,25 @@
             }
 
             try {
+                // Kirim multi-key biar Apps Script yang pake team_name / Team Name / teamName semua kecover + trim
+                const payload = {
+                    action: 'approve',
+                    teamName: selectedRow ? selectedRow.trim() : '',
+                    team_name: selectedRow ? selectedRow.trim() : '',
+                    'Team Name': selectedRow ? selectedRow.trim() : '',
+                    team: selectedRow ? selectedRow.trim() : '',
+                    approvedBy: approvedBy,
+                    schedule: schedule
+                };
+                console.log('Approve payload:', payload);
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: 'approve',
-                        teamName: selectedRow,
-                        approvedBy: approvedBy,
-                        schedule: schedule
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 const text = await response.text();
+                console.log('Approve response:', text);
                 let result;
                 try { result = JSON.parse(text); } catch(e) { result = { success: response.ok, error: text }; }
                 if (result.success) {
@@ -593,7 +600,7 @@
                     closeModal();
                     refreshData();
                 } else {
-                    alert('❌ Gagal approve: ' + (result.error || text || 'Unknown error'));
+                    alert('❌ Gagal approve: ' + (result.error || text || 'Unknown error') + '\n\nTeam: "' + selectedRow + '"\nCek Google Sheet -> kolom "Team Name" harus persis, tanpa spasi lebih. Cek Apps Script Execution log.');
                 }
             } catch (error) {
                 console.error('Approve error:', error);
@@ -608,23 +615,24 @@
             if (!confirm(`Yakin ingin menolak tim "${teamName}"?`)) return;
 
             try {
+                const cleanName = teamName ? teamName.trim() : '';
+                const payload = { action: 'reject', teamName: cleanName, team_name: cleanName, 'Team Name': cleanName, team: cleanName };
+                console.log('Reject payload:', payload);
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: 'reject',
-                        teamName: teamName
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 const text = await response.text();
+                console.log('Reject response:', text);
                 let result;
                 try { result = JSON.parse(text); } catch(e) { result = { success: response.ok, error: text }; }
                 if (result.success) {
                     alert('✅ Tim berhasil di-reject');
                     refreshData();
                 } else {
-                    alert('❌ Gagal reject: ' + (result.error || text || 'Unknown error'));
+                    alert('❌ Gagal reject: ' + (result.error || text || 'Unknown error') + '\n\nTeam: "' + teamName + '"');
                 }
             } catch (error) {
                 console.error('Reject error:', error);
