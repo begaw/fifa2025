@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - FIFA 2025 Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .glass-card {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 200, 0.15);
+        }
+
+        .stat-card {
+            background: rgba(0, 255, 200, 0.05);
+            border: 1px solid rgba(0, 255, 200, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 30px rgba(0, 255, 200, 0.1);
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, #00ffc8, #00a6ff);
+            transition: all 0.2s ease;
+        }
+
+        .btn-approve:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 200, 0.4);
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, #ff4444, #ff6b6b);
+            transition: all 0.2s ease;
+        }
+
+        .btn-reject:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.4);
+        }
+
+        .status-pending { background: #fbbf24; color: #000; }
+        .status-approved { background: #34d399; color: #000; }
+        .status-rejected { background: #ef4444; color: #fff; }
+        .status-scheduled { background: #60a5fa; color: #000; }
+        .status-completed { background: #9ca3af; color: #000; }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 8px;
+            color: #00ffc8;
+            border-bottom: 2px solid rgba(0, 255, 200, 0.2);
+            font-weight: 700;
+        }
+
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #d1d5db;
+        }
+
+        tr:hover td {
+            background: rgba(0, 255, 200, 0.03);
+        }
+
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+        }
+
+        .input-field {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: #00ffc8;
+            box-shadow: 0 0 20px rgba(0, 255, 200, 0.2);
+            outline: none;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #00ffc8, #00a6ff);
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-login:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(0, 255, 200, 0.3);
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .tab-btn.active {
+            background: rgba(0, 255, 200, 0.2);
+            color: #00ffc8;
+            border: 1px solid rgba(0, 255, 200, 0.3);
+        }
+
+        .tab-btn.inactive {
+            background: rgba(255,255,255,0.05);
+            color: #6b7280;
+            border: 1px solid transparent;
+        }
+
+        .tab-btn.inactive:hover {
+            background: rgba(255,255,255,0.1);
+            color: #d1d5db;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 500px;
+            width: 90%;
+            background: #1a1a2e;
+            border: 1px solid rgba(0, 255, 200, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1a1a2e; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #00ffc8, #00a6ff); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================ -->
+    <!-- LOGIN SCREEN -->
+    <!-- ============================================ -->
+    <div id="loginScreen" class="auth-container">
+        <div class="glass-card rounded-3xl p-8 text-center">
+            <div class="flex justify-center mb-4">
+                <i class="fas fa-shield-alt text-5xl text-[#00ffc8]"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2">Admin Dashboard</h2>
+            <p class="text-gray-400 text-sm mb-6">Akses khusus Apri & Kemal</p>
+            
+            <form id="loginForm" class="space-y-4">
+                <input type="password" id="adminPassword" 
+                    class="input-field" placeholder="Masukkan Password Admin" required />
+                <button type="submit" class="btn-login text-black">
+                    <i class="fas fa-unlock mr-2"></i> MASUK
+                </button>
+                <p class="text-gray-500 text-xs mt-4">🔒 Hanya Apri & Kemal yang memiliki akses</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DASHBOARD (Hidden by default) -->
+    <!-- ============================================ -->
+    <div id="dashboardScreen" class="hidden max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-white">
+                    👑 <span class="text-[#00ffc8]">Admin</span> Dashboard
+                </h1>
+                <p class="text-gray-400 text-sm">FIFA 2025 2v2 Challenge - Apri & Kemal</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-400 text-sm">
+                    <i class="fas fa-user text-[#00ffc8] mr-1"></i> 
+                    <span id="adminName">Apri & Kemal</span>
+                </span>
+                <button onclick="logout()" class="text-red-400 hover:text-red-300 text-sm transition">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div class="stat-card rounded-xl p-4 text-center">
+                <p class="text-gray-400 text-xs">Total</p>
+                <p class="text-2xl font-bold text-white" id="statTotal">0</p>
+            </div>
+            <div class="stat-card rounded-xl p-4 text-center border-yellow-500/30">
+                <p class="text-gray-400 text-xs">Pending</p>
+                <p class="text-2xl font-bold text-yellow-400" id="statPending">0</p>
+            </div>
+            <div class="stat-card rounded-xl p-4 text-center border-green-500/30">
+                <p class="text-gray-400 text-xs">Approved</p>
+                <p class="text-2xl font-bold text-green-400" id="statApproved">0</p>
+            </div>
+            <div class="stat-card rounded-xl p-4 text-center border-red-500/30">
+                <p class="text-gray-400 text-xs">Rejected</p>
+                <p class="text-2xl font-bold text-red-400" id="statRejected">0</p>
+            </div>
+            <div class="stat-card rounded-xl p-4 text-center border-blue-500/30">
+                <p class="text-gray-400 text-xs">Scheduled</p>
+                <p class="text-2xl font-bold text-blue-400" id="statScheduled">0</p>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex flex-wrap gap-2 mb-6">
+            <button class="tab-btn active" onclick="switchTab('pending')" id="tabPending">
+                <i class="fas fa-clock mr-1"></i> Pending
+                <span class="bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full text-xs ml-1" id="badgePending">0</span>
+            </button>
+            <button class="tab-btn inactive" onclick="switchTab('approved')" id="tabApproved">
+                <i class="fas fa-check-circle mr-1"></i> Approved
+            </button>
+            <button class="tab-btn inactive" onclick="switchTab('scheduled')" id="tabScheduled">
+                <i class="fas fa-calendar-check mr-1"></i> Scheduled
+            </button>
+            <button class="tab-btn inactive" onclick="switchTab('rejected')" id="tabRejected">
+                <i class="fas fa-times-circle mr-1"></i> Rejected
+            </button>
+            <button class="tab-btn inactive" onclick="switchTab('all')" id="tabAll">
+                <i class="fas fa-list mr-1"></i> All
+            </button>
+            <button class="tab-btn inactive ml-auto" onclick="refreshData()" id="tabRefresh">
+                <i class="fas fa-sync-alt mr-1"></i> Refresh
+            </button>
+        </div>
+
+        <!-- Table -->
+        <div class="glass-card rounded-2xl p-4 md:p-6">
+            <div class="table-wrap">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Timestamp</th>
+                            <th>Tim</th>
+                            <th>Player 1</th>
+                            <th>Player 2</th>
+                            <th>Tim Dipakai</th>
+                            <th>Platform</th>
+                            <th>Tanggal</th>
+                            <th>Jam</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="11" class="text-center text-gray-500 py-8">
+                                <i class="fas fa-spinner fa-spin mr-2"></i> Loading data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-gray-500 text-xs">
+            <p>© 2026 FIFA 2v2 Challenge. All rights reserved.</p>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- APPROVAL MODAL -->
+    <!-- ============================================ -->
+    <div id="approvalModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="text-center mb-6">
+                <i class="fas fa-check-circle text-4xl text-[#00ffc8]"></i>
+                <h3 class="text-xl font-bold text-white mt-2">Konfirmasi Approval</h3>
+                <p class="text-gray-400 text-sm">Setujui pertandingan untuk tim:</p>
+                <p class="text-[#00ffc8] font-bold text-lg" id="modalTeamName">-</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-gray-300 text-sm block mb-1">Approved By</label>
+                    <select id="modalApprovedBy" class="input-field">
+                        <option value="Apri">Apri</option>
+                        <option value="Kemal">Kemal</option>
+                        <option value="Both">Both (Apri & Kemal)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-gray-300 text-sm block mb-1">Jadwal Fix (Tanggal & Jam)</label>
+                    <input type="datetime-local" id="modalSchedule" class="input-field" required />
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="confirmApprove()" class="btn-approve flex-1 py-3 rounded-xl text-black font-bold">
+                        <i class="fas fa-check mr-2"></i> Approve
+                    </button>
+                    <button onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-gray-700 text-gray-300 font-bold hover:bg-gray-600 transition">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // KONFIGURASI - GANTI DENGAN URL APPS SCRIPT ANDA
+        // ============================================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbz0NfpOMVPWrPixLcuJlVWa7uEoJidSKUYCXsRnpv1cJOg1uyeMtmuLmCYwpP9VIJ7Oog/exec';
+        const ADMIN_PASSWORD = 'fifa2025'; // Ganti dengan password yang diinginkan
+        // ============================================
+
+        let currentData = [];
+        let currentTab = 'pending';
+        let selectedRow = null;
+
+        // ============================================
+        // AUTHENTICATION
+        // ============================================
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboardScreen').classList.remove('hidden');
+                document.getElementById('adminPassword').value = '';
+                loadData();
+            } else {
+                alert('❌ Password salah!');
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminPassword').focus();
+            }
+        });
+
+        function logout() {
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('dashboardScreen').classList.add('hidden');
+            document.getElementById('adminPassword').value = '';
+        }
+
+        // ============================================
+        // LOAD DATA
+        // ============================================
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_URL}?action=getData`);
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    currentData = result.data;
+                    updateStats();
+                    renderTable(currentTab);
+                } else {
+                    throw new Error('Gagal mengambil data');
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('tableBody').innerHTML = `
+                    <tr>
+                        <td colspan="11" class="text-center text-red-400 py-8">
+                            <i class="fas fa-exclamation-circle mr-2"></i> 
+                            Gagal memuat data. Silakan refresh.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function refreshData() {
+            document.getElementById('tableBody').innerHTML = `
+                <tr>
+                    <td colspan="11" class="text-center text-gray-500 py-8">
+                        <i class="fas fa-spinner fa-spin mr-2"></i> Memuat ulang data...
+                    </td>
+                </tr>
+            `;
+            loadData();
+        }
+
+        // ============================================
+        // UPDATE STATISTICS
+        // ============================================
+        function updateStats() {
+            const total = currentData.length;
+            const pending = currentData.filter(d => d.Status === 'Pending').length;
+            const approved = currentData.filter(d => d.Status === 'Approved').length;
+            const rejected = currentData.filter(d => d.Status === 'Rejected').length;
+            const scheduled = currentData.filter(d => d.Status === 'Scheduled').length;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statPending').textContent = pending;
+            document.getElementById('statApproved').textContent = approved;
+            document.getElementById('statRejected').textContent = rejected;
+            document.getElementById('statScheduled').textContent = scheduled;
+            document.getElementById('badgePending').textContent = pending;
+        }
+
+        // ============================================
+        // RENDER TABLE
+        // ============================================
+        function renderTable(tab) {
+            currentTab = tab;
+            let filtered = [];
+
+            switch(tab) {
+                case 'pending': filtered = currentData.filter(d => d.Status === 'Pending'); break;
+                case 'approved': filtered = currentData.filter(d => d.Status === 'Approved'); break;
+                case 'rejected': filtered = currentData.filter(d => d.Status === 'Rejected'); break;
+                case 'scheduled': filtered = currentData.filter(d => d.Status === 'Scheduled'); break;
+                default: filtered = currentData;
+            }
+
+            // Update tab styles
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'inactive');
+                btn.classList.add('inactive');
+            });
+            const activeTab = document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+            if (activeTab) {
+                activeTab.classList.remove('inactive');
+                activeTab.classList.add('active');
+            }
+
+            if (filtered.length === 0) {
+                document.getElementById('tableBody').innerHTML = `
+                    <tr>
+                        <td colspan="11" class="text-center text-gray-500 py-8">
+                            <i class="fas fa-inbox mr-2"></i> Tidak ada data di tab ini
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach((row, index) => {
+                const statusClass = `status-${row.Status.toLowerCase()}`;
+                const isPending = row.Status === 'Pending';
+                
+                html += `
+                    <tr>
+                        <td class="text-gray-500">${index + 1}</td>
+                        <td class="text-xs text-gray-400">${row.Timestamp || '-'}</td>
+                        <td class="font-bold text-white">${row['Team Name'] || '-'}</td>
+                        <td>${row['Player 1'] || '-'}</td>
+                        <td>${row['Player 2'] || '-'}</td>
+                        <td class="text-[#00ffc8]">${row['Tim Yang Digunakan'] || '-'}</td>
+                        <td>${row.Platform || '-'}</td>
+                        <td class="text-sm">${row['Preferred Date'] || '-'}</td>
+                        <td class="text-sm">${row['Preferred Time'] || '-'}</td>
+                        <td><span class="badge ${statusClass}">${row.Status || '-'}</span></td>
+                        <td>
+                            ${isPending ? `
+                                <button onclick="openApproveModal('${row['Team Name']}')" 
+                                    class="btn-approve text-xs px-3 py-1.5 rounded-lg text-black font-bold mr-1">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button onclick="rejectRow('${row['Team Name']}')" 
+                                    class="btn-reject text-xs px-3 py-1.5 rounded-lg text-white font-bold">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : `
+                                <span class="text-gray-500 text-xs">-</span>
+                            `}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('tableBody').innerHTML = html;
+        }
+
+        // ============================================
+        // TAB SWITCH
+        // ============================================
+        function switchTab(tab) {
+            renderTable(tab);
+        }
+
+        // ============================================
+        // APPROVAL MODAL
+        // ============================================
+        function openApproveModal(teamName) {
+            selectedRow = teamName;
+            document.getElementById('modalTeamName').textContent = teamName;
+            
+            // Set default schedule to next day 19:00
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(19, 0, 0, 0);
+            const iso = tomorrow.toISOString().slice(0, 16);
+            document.getElementById('modalSchedule').value = iso;
+            
+            document.getElementById('approvalModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('approvalModal').classList.remove('show');
+            selectedRow = null;
+        }
+
+        async function confirmApprove() {
+            if (!selectedRow) return;
+
+            const approvedBy = document.getElementById('modalApprovedBy').value;
+            const schedule = document.getElementById('modalSchedule').value;
+
+            if (!schedule) {
+                alert('Silakan pilih jadwal fix!');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'approve',
+                        teamName: selectedRow,
+                        approvedBy: approvedBy,
+                        schedule: schedule
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ Tim berhasil di-approve!');
+                    closeModal();
+                    refreshData();
+                } else {
+                    alert('❌ Gagal approve: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // REJECT
+        // ============================================
+        async function rejectRow(teamName) {
+            if (!confirm(`Yakin ingin menolak tim "${teamName}"?`)) return;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'reject',
+                        teamName: teamName
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ Tim berhasil di-reject');
+                    refreshData();
+                } else {
+                    alert('❌ Gagal reject: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // AUTO REFRESH (every 30 seconds)
+        // ============================================
+        setInterval(() => {
+            if (!document.getElementById('dashboardScreen').classList.contains('hidden')) {
+                loadData();
+            }
+        }, 30000);
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+            if (e.key === 'r' && e.ctrlKey) {
+                e.preventDefault();
+                refreshData();
+            }
+        });
+
+        // Click outside modal to close
+        document.getElementById('approvalModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+
+</body>
+</html>

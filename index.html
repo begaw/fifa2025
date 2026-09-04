@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FIFA 2025 Challenge - Tantang Apri & Kemal!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .glow-card {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 200, 0.2);
+            box-shadow: 0 0 50px rgba(0, 255, 200, 0.1);
+        }
+
+        .input-field {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: #00ffc8;
+            box-shadow: 0 0 20px rgba(0, 255, 200, 0.2);
+            outline: none;
+        }
+
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00ffc8, #00a6ff);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 40px rgba(0, 255, 200, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        select.input-field {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300ffc8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            padding-right: 2.5rem;
+            cursor: pointer;
+        }
+
+        select.input-field option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top: 3px solid #00ffc8;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a2e; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #00ffc8, #00a6ff); border-radius: 10px; }
+
+        /* Floating particles */
+        .particle {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            background: radial-gradient(circle, rgba(0,255,200,0.3), transparent);
+            animation: float linear infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Particles -->
+    <div id="particles"></div>
+
+    <div class="max-w-4xl mx-auto fade-in relative z-10">
+        
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <div class="flex justify-center mb-4">
+                <div class="relative">
+                    <div class="absolute inset-0 blur-3xl bg-gradient-to-r from-[#00ffc8] to-[#00a6ff] opacity-30 rounded-full"></div>
+                    <i class="fas fa-trophy text-7xl text-[#00ffc8] relative z-10"></i>
+                </div>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black text-white mb-2">
+                FIFA <span class="text-[#00ffc8]">2025</span>
+            </h1>
+            <p class="text-xl text-gray-300">2v2 CHALLENGE</p>
+            <div class="flex justify-center items-center gap-4 mt-3">
+                <div class="h-1 w-20 bg-gradient-to-r from-[#00ffc8] to-[#00a6ff] rounded-full"></div>
+                <span class="text-[#00ffc8] text-sm font-bold">TANTANG APRI & KEMAL</span>
+                <div class="h-1 w-20 bg-gradient-to-r from-[#00a6ff] to-[#00ffc8] rounded-full"></div>
+            </div>
+            <p class="text-gray-400 mt-4 text-sm max-w-md mx-auto">
+                <i class="fas fa-gamepad text-[#00ffc8] mr-2"></i>
+                Buktikan kemampuanmu! Menangkan hadiah jutaan rupiah + Jersey Official!
+            </p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="glow-card rounded-3xl p-6 md:p-10">
+            <form id="registrationForm" class="space-y-6">
+                
+                <!-- Team Name -->
+                <div>
+                    <label class="block text-gray-300 text-sm font-bold mb-2">
+                        <i class="fas fa-users text-[#00ffc8] mr-2"></i>
+                        Nama Tim
+                    </label>
+                    <input type="text" id="team_name" required
+                        class="input-field w-full px-4 py-3 rounded-xl"
+                        placeholder="Contoh: FC Banten, El Classico, dll" />
+                </div>
+
+                <!-- Player 1 -->
+                <div>
+                    <label class="block text-gray-300 text-sm font-bold mb-2">
+                        <i class="fas fa-user text-[#00ffc8] mr-2"></i>
+                        Pemain 1 - Nama Lengkap
+                    </label>
+                    <input type="text" id="player1" required
+                        class="input-field w-full px-4 py-3 rounded-xl"
+                        placeholder="Nama pemain pertama" />
+                </div>
+
+                <!-- Player 2 -->
+                <div>
+                    <label class="block text-gray-300 text-sm font-bold mb-2">
+                        <i class="fas fa-user text-[#00ffc8] mr-2"></i>
+                        Pemain 2 - Nama Lengkap
+                    </label>
+                    <input type="text" id="player2" required
+                        class="input-field w-full px-4 py-3 rounded-xl"
+                        placeholder="Nama pemain kedua" />
+                </div>
+
+                <!-- Tim Yang Digunakan -->
+                <div>
+                    <label class="block text-gray-300 text-sm font-bold mb-2">
+                        <i class="fas fa-futbol text-[#00ffc8] mr-2"></i>
+                        Tim Yang Digunakan
+                    </label>
+                    <select id="tim_digunakan" required class="input-field w-full px-4 py-3 rounded-xl">
+                        <option value="">Pilih Tim FIFA Favorit</option>
+                        <option value="Real Madrid">Real Madrid</option>
+                        <option value="Barcelona">Barcelona</option>
+                        <option value="PSG">PSG</option>
+                        <option value="Liverpool">Liverpool</option>
+                        <option value="Manchester City">Manchester City</option>
+                        <option value="Bayern Munich">Bayern Munich</option>
+                        <option value="Juventus">Juventus</option>
+                        <option value="AC Milan">AC Milan</option>
+                        <option value="Inter Milan">Inter Milan</option>
+                        <option value="Arsenal">Arsenal</option>
+                        <option value="Chelsea">Chelsea</option>
+                        <option value="Manchester United">Manchester United</option>
+                        <option value="Tottenham">Tottenham</option>
+                        <option value="Atletico Madrid">Atletico Madrid</option>
+                        <option value="Borussia Dortmund">Borussia Dortmund</option>
+                        <option value="Napoli">Napoli</option>
+                        <option value="Lazio">Lazio</option>
+                        <option value="Roma">Roma</option>
+                        <option value="Ajax">Ajax</option>
+                        <option value="Benfica">Benfica</option>
+                        <option value="Porto">Porto</option>
+                        <option value="Sporting CP">Sporting CP</option>
+                        <option value="Flamengo">Flamengo</option>
+                        <option value="Palmeiras">Palmeiras</option>
+                        <option value="River Plate">River Plate</option>
+                        <option value="Boca Juniors">Boca Juniors</option>
+                        <option value="Al-Hilal">Al-Hilal</option>
+                        <option value="Al-Nassr">Al-Nassr</option>
+                        <option value="LA Galaxy">LA Galaxy</option>
+                        <option value="Inter Miami">Inter Miami</option>
+                        <option value="Lainnya">Lainnya (isi manual)</option>
+                    </select>
+                    <input type="text" id="tim_digunakan_lainnya" 
+                        class="input-field w-full px-4 py-3 rounded-xl mt-2 hidden"
+                        placeholder="Masukkan nama tim lainnya..." />
+                </div>
+
+                <!-- Platform -->
+                <div>
+                    <label class="block text-gray-300 text-sm font-bold mb-2">
+                        <i class="fas fa-desktop text-[#00ffc8] mr-2"></i>
+                        Platform
+                    </label>
+                    <select id="platform" required class="input-field w-full px-4 py-3 rounded-xl">
+                        <option value="">Pilih Platform</option>
+                        <option value="PlayStation">PlayStation</option>
+                        <option value="Xbox">Xbox</option>
+                        <option value="PC">PC</option>
+                        <option value="Nintendo Switch">Nintendo Switch</option>
+                    </select>
+                </div>
+
+                <!-- Date & Time -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-300 text-sm font-bold mb-2">
+                            <i class="fas fa-calendar text-[#00ffc8] mr-2"></i>
+                            Tanggal Pilihan
+                        </label>
+                        <input type="date" id="tanggal" required
+                            class="input-field w-full px-4 py-3 rounded-xl" />
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 text-sm font-bold mb-2">
+                            <i class="fas fa-clock text-[#00ffc8] mr-2"></i>
+                            Jam Pilihan
+                        </label>
+                        <input type="time" id="jam" required
+                            class="input-field w-full px-4 py-3 rounded-xl" />
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label class="block text-gray-300 text-sm font-bold mb-2">
+                        <i class="fas fa-pen text-[#00ffc8] mr-2"></i>
+                        Catatan (Opsional)
+                    </label>
+                    <textarea id="notes" rows="2"
+                        class="input-field w-full px-4 py-3 rounded-xl resize-none"
+                        placeholder="Pesan atau catatan untuk Apri & Kemal..."></textarea>
+                </div>
+
+                <!-- Terms -->
+                <div class="flex items-start gap-3">
+                    <input type="checkbox" id="terms" required
+                        class="mt-1 w-5 h-5 accent-[#00ffc8] cursor-pointer" />
+                    <label for="terms" class="text-gray-400 text-sm">
+                        Saya setuju dengan 
+                        <a href="#" class="text-[#00ffc8] hover:underline">syarat & ketentuan</a> 
+                        dan 
+                        <a href="#" class="text-[#00ffc8] hover:underline">aturan main</a> 
+                        yang berlaku.
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submitBtn"
+                    class="btn-primary w-full py-4 rounded-xl text-black font-bold text-lg transition-all flex items-center justify-center gap-3">
+                    <i class="fas fa-rocket"></i>
+                    TANTANG APRI & KEMAL!
+                </button>
+
+                <!-- Loading -->
+                <div id="loadingSpinner" class="hidden flex justify-center items-center py-4 gap-3">
+                    <div class="loader"></div>
+                    <span class="text-gray-400">Mendaftarkan tim...</span>
+                </div>
+
+                <!-- Success Message -->
+                <div id="successMessage" class="hidden bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-5 text-center">
+                    <i class="fas fa-check-circle text-emerald-400 text-3xl mb-2"></i>
+                    <p class="text-emerald-400 font-bold text-lg">Pendaftaran Berhasil! 🎉</p>
+                    <p class="text-gray-300 text-sm mt-2">
+                        Tim <span id="successTeam" class="text-[#00ffc8] font-bold"></span> telah terdaftar!
+                    </p>
+                    <p class="text-gray-400 text-xs mt-2">
+                        Apri & Kemal akan segera mengkonfirmasi jadwal pertandingan.
+                    </p>
+                </div>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="hidden bg-red-500/20 border border-red-500/50 rounded-xl p-5 text-center">
+                    <i class="fas fa-exclamation-circle text-red-400 text-3xl mb-2"></i>
+                    <p class="text-red-400 font-bold" id="errorText">Terjadi kesalahan. Silakan coba lagi.</p>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Rules -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="glow-card rounded-2xl p-6">
+                <h3 class="text-[#00ffc8] font-bold mb-3">
+                    <i class="fas fa-scroll mr-2"></i>
+                    ATURAN MAIN
+                </h3>
+                <ul class="text-gray-300 text-sm space-y-2">
+                    <li>• <span class="text-white font-bold">2 vs 2</span> (Apri & Kemal sebagai tuan rumah)</li>
+                    <li>• Setting: <span class="text-white font-bold">6 menit / half</span> (full time)</li>
+                    <li>• Tim pemenang berhak pilih tim untuk next match</li>
+                    <li>• Wasit: Fair play & sportivitas utama</li>
+                    <li>• Keputusan wasit mutlak & tidak bisa diganggu gugat</li>
+                    <li>• Pendaftaran ditutup H-1 pertandingan</li>
+                </ul>
+            </div>
+            <div class="glow-card rounded-2xl p-6">
+                <h3 class="text-[#00ffc8] font-bold mb-3">
+                    <i class="fas fa-gift mr-2"></i>
+                    HADIAH
+                </h3>
+                <ul class="text-gray-300 text-sm space-y-2">
+                    <li>🏆 <span class="text-white font-bold">Rp 5.000.000</span> + Official Jersey</li>
+                    <li>🥇 Juara 2: <span class="text-white font-bold">Rp 2.500.000</span></li>
+                    <li>🥉 Juara 3: <span class="text-white font-bold">Rp 1.000.000</span></li>
+                    <li>🎮 Semua peserta mendapatkan merchandise eksklusif</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-gray-500 text-xs">
+            <p>© 2026 FIFA 2v2 Challenge. All rights reserved.</p>
+            <p class="mt-1">
+                <i class="fas fa-shield-alt text-[#00ffc8] mr-1"></i>
+                Data Anda aman dan terlindungi
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // KONFIGURASI - GANTI DENGAN URL APPS SCRIPT ANDA
+        // ============================================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbz0NfpOMVPWrPixLcuJlVWa7uEoJidSKUYCXsRnpv1cJOg1uyeMtmuLmCYwpP9VIJ7Oog/exec';
+        // ============================================
+
+        // DOM Elements
+        const form = document.getElementById('registrationForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loadingSpinner');
+        const successMsg = document.getElementById('successMessage');
+        const errorMsg = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const successTeam = document.getElementById('successTeam');
+
+        // Handle "Lainnya" option
+        const timSelect = document.getElementById('tim_digunakan');
+        const timLainnya = document.getElementById('tim_digunakan_lainnya');
+
+        timSelect.addEventListener('change', function() {
+            if (this.value === 'Lainnya') {
+                timLainnya.classList.remove('hidden');
+                timLainnya.required = true;
+            } else {
+                timLainnya.classList.add('hidden');
+                timLainnya.required = false;
+                timLainnya.value = '';
+            }
+        });
+
+        // Generate floating particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 10 + 5;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDuration = (Math.random() * 20 + 15) + 's';
+                particle.style.animationDelay = (Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('tanggal').min = today;
+
+        // Form Submit
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Reset UI
+            successMsg.classList.add('hidden');
+            errorMsg.classList.add('hidden');
+            submitBtn.classList.add('hidden');
+            loading.classList.remove('hidden');
+
+            // Get values
+            let timDigunakan = timSelect.value;
+            if (timDigunakan === 'Lainnya') {
+                timDigunakan = timLainnya.value.trim();
+                if (!timDigunakan) {
+                    showError('Silakan isi nama tim lainnya');
+                    return;
+                }
+            }
+
+            const formData = {
+                team_name: document.getElementById('team_name').value.trim(),
+                player1: document.getElementById('player1').value.trim(),
+                player2: document.getElementById('player2').value.trim(),
+                tim_digunakan: timDigunakan,
+                platform: document.getElementById('platform').value,
+                tanggal: document.getElementById('tanggal').value,
+                jam: document.getElementById('jam').value,
+                notes: document.getElementById('notes').value.trim()
+            };
+
+            // Validate
+            for (let key in formData) {
+                if (key !== 'notes' && !formData[key]) {
+                    showError(`Field ${key.replace('_', ' ')} wajib diisi`);
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                // Karena mode no-cors, response tidak bisa dibaca
+                // Tapi kita anggap sukses
+                showSuccess(formData.team_name);
+                
+                // Reset form
+                form.reset();
+                timLainnya.classList.add('hidden');
+                timLainnya.required = false;
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Gagal mengirim data. Periksa koneksi internet Anda.');
+            }
+        });
+
+        function showSuccess(teamName) {
+            loading.classList.add('hidden');
+            successTeam.textContent = teamName;
+            successMsg.classList.remove('hidden');
+            submitBtn.classList.remove('hidden');
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> TERDAFTAR!';
+            submitBtn.disabled = true;
+
+            setTimeout(() => {
+                submitBtn.innerHTML = '<i class="fas fa-rocket"></i> TANTANG APRI & KEMAL!';
+                submitBtn.disabled = false;
+                successMsg.classList.add('hidden');
+            }, 6000);
+        }
+
+        function showError(message) {
+            loading.classList.add('hidden');
+            errorText.textContent = message;
+            errorMsg.classList.remove('hidden');
+            submitBtn.classList.remove('hidden');
+            submitBtn.disabled = false;
+        }
+    </script>
+
+</body>
+</html>
