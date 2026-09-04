@@ -404,15 +404,17 @@
         // ============================================
         async function loadData() {
             try {
-                const response = await fetch(`${API_URL}?action=getData`);
-                const result = await response.json();
+                const response = await fetch(`${API_URL}?action=getData`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+                const text = await response.text();
+                let result;
+                try { result = JSON.parse(text); } catch(e) { throw new Error('Response bukan JSON: ' + text.slice(0,200)); }
                 
                 if (result.success && result.data) {
                     currentData = result.data;
                     updateStats();
                     renderTable(currentTab);
                 } else {
-                    throw new Error('Gagal mengambil data');
+                    throw new Error(result.error || 'Gagal mengambil data');
                 }
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -420,7 +422,7 @@
                     <tr>
                         <td colspan="11" class="text-center text-red-400 py-8">
                             <i class="fas fa-exclamation-circle mr-2"></i> 
-                            Gagal memuat data. Silakan refresh.
+                            Gagal memuat data: ${error.message}<br><span class="text-xs text-gray-500">Cek Apps Script Deploy -> Anyone, dan API_URL benar</span>
                         </td>
                     </tr>
                 `;
@@ -512,11 +514,11 @@
                         <td><span class="badge ${statusClass}">${row.Status || '-'}</span></td>
                         <td>
                             ${isPending ? `
-                                <button onclick="openApproveModal('${row['Team Name']}')" 
+                                <button onclick="openApproveModal(decodeURIComponent('${encodeURIComponent(row['Team Name'] || '')}'))" 
                                     class="btn-approve text-xs px-3 py-1.5 rounded-lg text-black font-bold mr-1">
                                     <i class="fas fa-check"></i>
                                 </button>
-                                <button onclick="rejectRow('${row['Team Name']}')" 
+                                <button onclick="rejectRow(decodeURIComponent('${encodeURIComponent(row['Team Name'] || '')}'))" 
                                     class="btn-reject text-xs px-3 py-1.5 rounded-lg text-white font-bold">
                                     <i class="fas fa-times"></i>
                                 </button>
@@ -574,7 +576,7 @@
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'approve',
                         teamName: selectedRow,
@@ -583,16 +585,19 @@
                     })
                 });
 
-                const result = await response.json();
+                const text = await response.text();
+                let result;
+                try { result = JSON.parse(text); } catch(e) { result = { success: response.ok, error: text }; }
                 if (result.success) {
                     alert('✅ Tim berhasil di-approve!');
                     closeModal();
                     refreshData();
                 } else {
-                    alert('❌ Gagal approve: ' + (result.error || 'Unknown error'));
+                    alert('❌ Gagal approve: ' + (result.error || text || 'Unknown error'));
                 }
             } catch (error) {
-                alert('❌ Error: ' + error.message);
+                console.error('Approve error:', error);
+                alert('❌ Error: ' + error.message + '\n\nCek: 1) Apps Script sudah Deploy sebagai "Anyone" 2) URL API benar 3) Coba refresh halaman');
             }
         }
 
@@ -605,22 +610,25 @@
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'reject',
                         teamName: teamName
                     })
                 });
 
-                const result = await response.json();
+                const text = await response.text();
+                let result;
+                try { result = JSON.parse(text); } catch(e) { result = { success: response.ok, error: text }; }
                 if (result.success) {
                     alert('✅ Tim berhasil di-reject');
                     refreshData();
                 } else {
-                    alert('❌ Gagal reject: ' + (result.error || 'Unknown error'));
+                    alert('❌ Gagal reject: ' + (result.error || text || 'Unknown error'));
                 }
             } catch (error) {
-                alert('❌ Error: ' + error.message);
+                console.error('Reject error:', error);
+                alert('❌ Error: ' + error.message + '\n\nCek: 1) Apps Script sudah Deploy sebagai "Anyone" 2) URL API benar');
             }
         }
 
