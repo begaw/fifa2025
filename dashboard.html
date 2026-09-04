@@ -283,10 +283,16 @@
             <button class="tab-btn inactive" onclick="switchTab('rejected')" id="tabRejected">
                 <i class="fas fa-times-circle mr-1"></i> Rejected
             </button>
+            <button class="tab-btn inactive" onclick="switchTab('completed')" id="tabCompleted">
+                <i class="fas fa-trophy mr-1"></i> Hasil
+            </button>
             <button class="tab-btn inactive" onclick="switchTab('all')" id="tabAll">
                 <i class="fas fa-list mr-1"></i> All
             </button>
-            <button class="tab-btn inactive ml-auto" onclick="refreshData()" id="tabRefresh">
+            <button class="tab-btn inactive ml-auto" onclick="window.open('/queue','_blank')" id="tabQueue">
+                <i class="fas fa-eye mr-1"></i> Lihat Queue Publik
+            </button>
+            <button class="tab-btn inactive" onclick="refreshData()" id="tabRefresh">
                 <i class="fas fa-sync-alt mr-1"></i> Refresh
             </button>
         </div>
@@ -307,12 +313,13 @@
                             <th>Tanggal</th>
                             <th>Jam</th>
                             <th>Status</th>
+                            <th>Hasil</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="11" class="text-center text-gray-500 py-8">
+                            <td colspan="12" class="text-center text-gray-500 py-8">
                                 <i class="fas fa-spinner fa-spin mr-2"></i> Loading data...
                             </td>
                         </tr>
@@ -324,6 +331,47 @@
         <!-- Footer -->
         <div class="text-center mt-8 text-gray-500 text-xs">
             <p>© 2026 FIFA 2v2 Challenge. All rights reserved.</p>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- RESULT MODAL (Menang/Kalah) -->
+    <!-- ============================================ -->
+    <div id="resultModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="text-center mb-6">
+                <i class="fas fa-trophy text-4xl text-[#00ffc8]"></i>
+                <h3 class="text-xl font-bold text-white mt-2">Input Hasil Pertandingan</h3>
+                <p class="text-gray-400 text-sm">Penantang vs Apri & Kemal:</p>
+                <p class="text-[#00ffc8] font-bold text-lg" id="resultTeamName">-</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-gray-300 text-sm block mb-1">Hasil Penantang</label>
+                    <select id="resultHasil" class="input-field">
+                        <option value="">Pilih Hasil</option>
+                        <option value="Menang">✅ Menang (Penantang Menang)</option>
+                        <option value="Kalah">❌ Kalah (Penantang Kalah)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-gray-300 text-sm block mb-1">Input By</label>
+                    <select id="resultInputBy" class="input-field">
+                        <option value="Apri">Apri</option>
+                        <option value="Kemal">Kemal</option>
+                        <option value="Both">Both (Apri & Kemal)</option>
+                    </select>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="confirmResult()" class="btn-approve flex-1 py-3 rounded-xl text-black font-bold">
+                        <i class="fas fa-save mr-2"></i> Simpan Hasil
+                    </button>
+                    <button onclick="closeResultModal()" class="flex-1 py-3 rounded-xl bg-gray-700 text-gray-300 font-bold hover:bg-gray-600 transition">
+                        Batal
+                    </button>
+                </div>
+                <p class="text-gray-500 text-xs text-center">Hasil akan tampil di halaman antrian publik</p>
+            </div>
         </div>
     </div>
 
@@ -420,7 +468,7 @@
                 console.error('Error loading data:', error);
                 document.getElementById('tableBody').innerHTML = `
                     <tr>
-                        <td colspan="11" class="text-center text-red-400 py-8">
+                        <td colspan="12" class="text-center text-red-400 py-8">
                             <i class="fas fa-exclamation-circle mr-2"></i> 
                             Gagal memuat data: ${error.message}<br><span class="text-xs text-gray-500">Cek Apps Script Deploy -> Anyone, dan API_URL benar</span>
                         </td>
@@ -432,13 +480,19 @@
         function refreshData() {
             document.getElementById('tableBody').innerHTML = `
                 <tr>
-                    <td colspan="11" class="text-center text-gray-500 py-8">
+                    <td colspan="12" class="text-center text-gray-500 py-8">
                         <i class="fas fa-spinner fa-spin mr-2"></i> Memuat ulang data...
                     </td>
                 </tr>
             `;
             loadData();
         }
+
+        // ============================================
+        // HELPERS - Hasil
+        // ============================================
+        function getHasil(row){ return (row['Hasil'] || row['hasil'] || row['Result'] || '').toString().trim(); }
+        function isCompleted(row){ const h=getHasil(row).toLowerCase(); return h==='menang'||h==='kalah'; }
 
         // ============================================
         // UPDATE STATISTICS
@@ -449,6 +503,7 @@
             const approved = currentData.filter(d => d.Status === 'Approved').length;
             const rejected = currentData.filter(d => d.Status === 'Rejected').length;
             const scheduled = currentData.filter(d => d.Status === 'Scheduled').length;
+            const completed = currentData.filter(isCompleted).length;
 
             document.getElementById('statTotal').textContent = total;
             document.getElementById('statPending').textContent = pending;
@@ -456,6 +511,9 @@
             document.getElementById('statRejected').textContent = rejected;
             document.getElementById('statScheduled').textContent = scheduled;
             document.getElementById('badgePending').textContent = pending;
+            // update completed badge if exists
+            const badgeCompleted = document.getElementById('badgeCompleted');
+            if(badgeCompleted) badgeCompleted.textContent = completed;
         }
 
         // ============================================
@@ -470,6 +528,7 @@
                 case 'approved': filtered = currentData.filter(d => d.Status === 'Approved'); break;
                 case 'rejected': filtered = currentData.filter(d => d.Status === 'Rejected'); break;
                 case 'scheduled': filtered = currentData.filter(d => d.Status === 'Scheduled'); break;
+                case 'completed': filtered = currentData.filter(isCompleted); break;
                 default: filtered = currentData;
             }
 
@@ -487,7 +546,7 @@
             if (filtered.length === 0) {
                 document.getElementById('tableBody').innerHTML = `
                     <tr>
-                        <td colspan="11" class="text-center text-gray-500 py-8">
+                        <td colspan="12" class="text-center text-gray-500 py-8">
                             <i class="fas fa-inbox mr-2"></i> Tidak ada data di tab ini
                         </td>
                     </tr>
@@ -497,8 +556,17 @@
 
             let html = '';
             filtered.forEach((row, index) => {
-                const statusClass = `status-${row.Status.toLowerCase()}`;
-                const isPending = row.Status === 'Pending';
+                const status = (row.Status || '').toString().trim();
+                const statusClass = `status-${status.toLowerCase()}`;
+                const isPending = status === 'Pending';
+                const isApprovable = status === 'Approved' || status === 'Scheduled';
+                const hasil = getHasil(row);
+                const hasilLower = hasil.toLowerCase();
+                let hasilBadge = '';
+                if(hasilLower==='menang') hasilBadge='<span class="badge" style="background:#00ffc8;color:#000">MENANG</span>';
+                else if(hasilLower==='kalah') hasilBadge='<span class="badge" style="background:#ef4444;color:#fff">KALAH</span>';
+                else hasilBadge='<span class="badge" style="background:#6b7280;color:#fff">-</span>';
+                const canInputHasil = isApprovable && !hasil;
                 
                 html += `
                     <tr>
@@ -511,16 +579,22 @@
                         <td>${row.Platform || '-'}</td>
                         <td class="text-sm">${row['Preferred Date'] || '-'}</td>
                         <td class="text-sm">${row['Preferred Time'] || '-'}</td>
-                        <td><span class="badge ${statusClass}">${row.Status || '-'}</span></td>
+                        <td><span class="badge ${statusClass}">${status || '-'}</span></td>
+                        <td>${hasilBadge}</td>
                         <td>
                             ${isPending ? `
                                 <button onclick="openApproveModal(decodeURIComponent('${encodeURIComponent(row['Team Name'] || '')}'))" 
-                                    class="btn-approve text-xs px-3 py-1.5 rounded-lg text-black font-bold mr-1">
+                                    class="btn-approve text-xs px-3 py-1.5 rounded-lg text-black font-bold mr-1" title="Approve">
                                     <i class="fas fa-check"></i>
                                 </button>
                                 <button onclick="rejectRow(decodeURIComponent('${encodeURIComponent(row['Team Name'] || '')}'))" 
-                                    class="btn-reject text-xs px-3 py-1.5 rounded-lg text-white font-bold">
+                                    class="btn-reject text-xs px-3 py-1.5 rounded-lg text-white font-bold" title="Reject">
                                     <i class="fas fa-times"></i>
+                                </button>
+                            ` : canInputHasil ? `
+                                <button onclick="openResultModal(decodeURIComponent('${encodeURIComponent(row['Team Name'] || '')}'))" 
+                                    class="btn-approve text-xs px-3 py-1.5 rounded-lg text-black font-bold" title="Input Hasil Menang/Kalah">
+                                    <i class="fas fa-trophy"></i> Hasil
                                 </button>
                             ` : `
                                 <span class="text-gray-500 text-xs">-</span>
@@ -655,12 +729,63 @@
         // KEYBOARD SHORTCUTS
         // ============================================
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeModal();
+            if (e.key === 'Escape') { closeModal(); closeResultModal(); }
             if (e.key === 'r' && e.ctrlKey) {
                 e.preventDefault();
                 refreshData();
             }
         });
+
+        // ============================================
+        // RESULT MODAL (Menang/Kalah)
+        // ============================================
+        let resultTeam = null;
+        function openResultModal(teamName){
+            resultTeam = teamName;
+            document.getElementById('resultTeamName').textContent = teamName;
+            document.getElementById('resultHasil').value = '';
+            document.getElementById('resultModal').classList.add('show');
+        }
+        function closeResultModal(){
+            document.getElementById('resultModal').classList.remove('show');
+            resultTeam = null;
+        }
+        async function confirmResult(){
+            if(!resultTeam) return;
+            const hasil = document.getElementById('resultHasil').value;
+            const inputBy = document.getElementById('resultInputBy').value;
+            if(!hasil){ alert('Pilih Menang atau Kalah!'); return; }
+            if(!confirm(`Simpan hasil "${hasil}" untuk tim "${resultTeam}"?`)) return;
+            try{
+                const payload = {
+                    action: 'submitResult',
+                    teamName: resultTeam.trim(),
+                    team_name: resultTeam.trim(),
+                    'Team Name': resultTeam.trim(),
+                    team: resultTeam.trim(),
+                    hasil: hasil,
+                    result: hasil,
+                    inputBy: inputBy
+                };
+                console.log('SubmitResult payload:', payload);
+                const res = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
+                const text = await res.text();
+                console.log('SubmitResult response:', text);
+                let result; try{ result = JSON.parse(text); } catch(e){ result={success:res.ok, error:text}; }
+                if(result.success){
+                    alert('✅ Hasil '+hasil+' berhasil disimpan!');
+                    closeResultModal();
+                    refreshData();
+                } else {
+                    const msg = result.error || result.message || text || 'Unknown error';
+                    alert('❌ Gagal simpan hasil: '+msg);
+                }
+            } catch(err){
+                console.error(err);
+                alert('❌ Error: '+err.message);
+            }
+        }
+        document.getElementById('resultModal').addEventListener('click', function(e){ if(e.target===this) closeResultModal(); });
 
         // Click outside modal to close
         document.getElementById('approvalModal').addEventListener('click', function(e) {

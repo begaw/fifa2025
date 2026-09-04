@@ -28,6 +28,11 @@ function doPost(e) {
     } else if (data.action === 'reject') {
       const teamName = getTeamName_(data);
       return rejectRegistration(teamName);
+    } else if (data.action === 'submitResult') {
+      const teamName = getTeamName_(data);
+      const hasil = (data.hasil || data.result || '').toString().trim();
+      const inputBy = (data.inputBy || data.approvedBy || '').toString().trim();
+      return submitResult(teamName, hasil, inputBy);
     } else {
       return saveRegistration(data);
     }
@@ -91,7 +96,8 @@ function saveRegistration(data) {
     data.tanggal,
     data.jam,
     'Pending',
-    '', '', '', data.notes ? data.notes.toString().trim() : ''
+    '', '', '', data.notes ? data.notes.toString().trim() : '',
+    '', '', '' // Hasil, Result Date, Input By (kolom 14-16)
   ];
   sheet.appendRow(row);
   return respond(true, 'Pendaftaran berhasil!');
@@ -148,6 +154,62 @@ function rejectRegistration(teamName) {
 }
 
 // =============================================
+// SUBMIT RESULT - Menang/Kalah penantang vs Apri & Kemal
+// =============================================
+function submitResult(teamName, hasil, inputBy) {
+  const normalized = hasil.toString().trim().toLowerCase();
+  const finalHasil = normalized === 'menang' ? 'Menang' : normalized === 'kalah' ? 'Kalah' : '';
+  if (!finalHasil) return respond(false, '❌ Hasil harus Menang atau Kalah, dapat: ' + hasil);
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_REGISTRASI);
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => h.toString().trim());
+  // Auto-create kolom baru jika belum ada (backward compatible)
+  let hasilCol = headers.indexOf('Hasil');
+  let resultDateCol = headers.indexOf('Result Date');
+  let inputByCol = headers.indexOf('Input By');
+  if (hasilCol === -1) {
+    // tambah header baru di akhir
+    const newHeaders = ['Hasil', 'Result Date', 'Input By'];
+    const lastCol = headers.length;
+    for (let k = 0; k < newHeaders.length; k++) {
+      if (headers.indexOf(newHeaders[k]) === -1) {
+        sheet.getRange(1, headers.length + k + 1).setValue(newHeaders[k]);
+      }
+    }
+    // refresh
+    return submitResult(teamName, hasil, inputBy); // retry setelah header dibuat
+  }
+  hasilCol = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0].map(h=>h.toString().trim()).indexOf('Hasil');
+  resultDateCol = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0].map(h=>h.toString().trim()).indexOf('Result Date');
+  inputByCol = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0].map(h=>h.toString().trim()).indexOf('Input By');
+
+  const cleanTarget = teamName ? teamName.toString().trim().toLowerCase() : '';
+  if (!cleanTarget) return respond(false, '❌ teamName kosong');
+
+  for (let i = 1; i < data.length; i++) {
+    const sheetTeam = data[i][1] ? data[i][1].toString().trim().toLowerCase() : '';
+    if (sheetTeam === cleanTarget) {
+      const status = data[i][8] ? data[i][8].toString().trim() : '';
+      if (status !== 'Approved' && status !== 'Scheduled') {
+        return respond(false, '❌ Tim "' + data[i][1] + '" belum di-approve (Status: ' + status + '). Approve dulu baru input hasil');
+      }
+      const existingHasil = hasilCol !== -1 && data[i][hasilCol] ? data[i][hasilCol].toString().trim() : '';
+      if (existingHasil === 'Menang' || existingHasil === 'Kalah') {
+        return respond(false, '❌ Hasil untuk "' + data[i][1] + '" sudah diinput: ' + existingHasil + '. Hapus manual di Sheet jika mau ubah');
+      }
+      // set hasil
+      sheet.getRange(i + 1, hasilCol + 1).setValue(finalHasil);
+      if (resultDateCol !== -1) sheet.getRange(i + 1, resultDateCol + 1).setValue(new Date().toISOString());
+      if (inputByCol !== -1) sheet.getRange(i + 1, inputByCol + 1).setValue(inputBy || '');
+      // optional: set Status jadi Completed biar hilang dari antrian? Tetap Approved biar history queue tetap, tapi Hasil yang jadi penentu
+      return respond(true, '✅ Hasil ' + finalHasil + ' untuk "' + data[i][1] + '" berhasil disimpan!');
+    }
+  }
+  return respond(false, '❌ Tim tidak ditemukan: "' + teamName + '"');
+}
+
+// =============================================
 // HELPER RESPONSE
 // =============================================
 function respond(success, message, data = null) {
@@ -164,10 +226,19 @@ function testConnection() {
   let sheet = ss.getSheetByName(SHEET_REGISTRASI);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_REGISTRASI);
-    const headers = ['Timestamp', 'Team Name', 'Player 1', 'Player 2', 'Tim Yang Digunakan', 'Platform', 'Preferred Date', 'Preferred Time', 'Status', 'Approved By', 'Approval Date', 'Match Schedule', 'Notes'];
+    const headers = ['Timestamp', 'Team Name', 'Player 1', 'Player 2', 'Tim Yang Digunakan', 'Platform', 'Preferred Date', 'Preferred Time', 'Status', 'Approved By', 'Approval Date', 'Match Schedule', 'Notes', 'Hasil', 'Result Date', 'Input By'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     Logger.log('✅ Sheet Registrasi berhasil dibuat!');
   } else {
+    // auto-migrate header lama ke baru
+    const headers = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0].map(h=>h.toString().trim());
+    const needed = ['Hasil','Result Date','Input By'];
+    let added = [];
+    for (let h of needed) if (headers.indexOf(h)===-1) added.push(h);
+    if (added.length) {
+      for (let h of added) sheet.getRange(1, headers.length+added.indexOf(h)+1).setValue(h);
+      Logger.log('✅ Header ditambah: '+added.join(', '));
+    }
     Logger.log(`✅ Sheet ditemukan, total data: ${sheet.getLastRow() - 1} baris`);
   }
 }
